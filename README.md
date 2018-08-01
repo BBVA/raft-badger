@@ -1,3 +1,8 @@
+[![Build Status](https://travis-ci.org/BBVA/raft-badger.svg?branch=master)](https://travis-ci.org/BBVA/raft-badger)
+[![Coverage](https://codecov.io/gh/BBVA/raft-badger/branch/master/graph/badge.svg)](https://codecov.io/gh/BBVA/raft-badger)
+[![GoReport](https://goreportcard.com/badge/github.com/bbva/raft-badger)](https://goreportcard.com/report/github.com/bbva/raft-badger)
+[![GoDoc](https://godoc.org/github.com/bbva/raft-badger?status.svg)](https://godoc.org/github.com/bbva/raft-badger)
+
 raft-badger
 ===========
 
