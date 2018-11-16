@@ -18,6 +18,7 @@ package raftbadger
 
 import (
 	"errors"
+	"time"
 
 	"github.com/dgraph-io/badger"
 	"github.com/hashicorp/raft"
@@ -37,6 +38,9 @@ type BadgerStore struct {
 
 	// The path to the Badger database directory.
 	path string
+
+	vlogTicker          *time.Ticker // runs every 1m, check size of vlog and run GC conditionally.
+	mandatoryVlogTicker *time.Ticker // runs every 10m, we always run vlog GC.
 }
 
 // Options contains all the configuration used to open the Badger db
@@ -52,6 +56,18 @@ type Options struct {
 	// write to the log. This is unsafe, so it should be used
 	// with caution.
 	NoSync bool
+
+	// ValueLogGC enables a periodic goroutine that does a garbage
+	// collection of the value log while the underlying Badger is online.
+	ValueLogGC bool
+
+	// GCInterval is the interval between conditionally running the garbage
+	// collection process, based on the size of the vlog. By default, runs every 1m.
+	GCInterval time.Duration
+
+	// GCInterval is the interval between mandatory running the garbage
+	// collection process. By default, runs every 10m.
+	MandatoryGCInterval time.Duration
 }
 
 // NewBadgerStore takes a file path and returns a connected Raft backend.
@@ -90,11 +106,63 @@ func New(options Options) (*BadgerStore, error) {
 		path: options.Path,
 	}
 
+	// Start GC routine
+	if options.ValueLogGC {
+
+		var gcInterval time.Duration
+		var mandatoryGCInterval time.Duration
+
+		if gcInterval = 1 * time.Minute; options.GCInterval != 0 {
+			gcInterval = options.GCInterval
+		}
+		if mandatoryGCInterval = 10 * time.Minute; options.MandatoryGCInterval != 0 {
+			mandatoryGCInterval = options.MandatoryGCInterval
+		}
+
+		store.vlogTicker = time.NewTicker(gcInterval)
+		store.mandatoryVlogTicker = time.NewTicker(mandatoryGCInterval)
+		go store.runVlogGC(handle)
+	}
+
 	return store, nil
+}
+
+func (b *BadgerStore) runVlogGC(db *badger.DB) {
+	// Get initial size on start.
+	_, lastVlogSize := db.Size()
+	const GB = 0 //int64(1 << 30)
+
+	runGC := func() {
+		var err error
+		for err == nil {
+			// If a GC is successful, immediately run it again.
+			err = db.RunValueLogGC(0.7)
+		}
+		_, lastVlogSize = db.Size()
+	}
+
+	for {
+		select {
+		case <-b.vlogTicker.C:
+			_, currentVlogSize := db.Size()
+			if currentVlogSize < lastVlogSize+GB {
+				continue
+			}
+			runGC()
+		case <-b.mandatoryVlogTicker.C:
+			runGC()
+		}
+	}
 }
 
 // Close is used to gracefully close the DB connection.
 func (b *BadgerStore) Close() error {
+	if b.vlogTicker != nil {
+		b.vlogTicker.Stop()
+	}
+	if b.mandatoryVlogTicker != nil {
+		b.mandatoryVlogTicker.Stop()
+	}
 	return b.conn.Close()
 }
 
