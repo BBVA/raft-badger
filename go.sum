@@ -6,6 +6,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgraph-io/badger v1.5.3 h1:5oWIuRvwn93cie+OSt1zSnkaIQ1JFQM8bGlIv6O6Sts=
 github.com/dgraph-io/badger v1.5.3/go.mod h1:VZxzAIRPHRVNRKRo6AXrX9BJegn6il06VMTZVJYCIjQ=
+github.com/dgraph-io/badger v1.5.4 h1:gVTrpUTbbr/T24uvoCaqY2KSHfNLVGm0w+hbee2HMeg=
+github.com/dgraph-io/badger v1.5.4/go.mod h1:VZxzAIRPHRVNRKRo6AXrX9BJegn6il06VMTZVJYCIjQ=
 github.com/dgryski/go-farm v0.0.0-20180109070241-2de33835d102 h1:afESQBXJEnj3fu+34X//E8Wg3nEbMJxJkwSc0tPePK0=
 github.com/dgryski/go-farm v0.0.0-20180109070241-2de33835d102/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=

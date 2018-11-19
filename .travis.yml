@@ -9,12 +9,9 @@ language: go
 
 # https://github.com/travis-ci/travis-ci/issues/9247
 go:
-    - "1.9"
-    - "1.10"
-
-install: make deps
-script:
-    - make test
+    - "1.11"
+env:
+  - GO111MODULE=on
 
 # https://docs.travis-ci.com/user/languages/go/#Go-Import-Path
 go_import_path: github.com/bbva/raft-badger
@@ -31,12 +28,20 @@ notifications:
   email: false
 
 before_script:
-  - go get -d ./...
-  - go get github.com/hashicorp/raft
-  - go get github.com/dgraph-io/badger
+  - go mod download
 
 script:
   - go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+  - go vet -composites=false ./...
+
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: curl -sL http://git.io/goreleaser | bash
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux
