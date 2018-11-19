@@ -69,8 +69,8 @@ type Options struct {
 	// collection process. By default, runs every 10m.
 	MandatoryGCInterval time.Duration
 
-	// GCThreshold sets threshold for the vlog size to be included in the garbage
-	// collection cycle. By default, 1GB.
+	// GCThreshold sets threshold in bytes for the vlog size to be included in the
+	// garbage collection cycle. By default, 1GB.
 	GCThreshold int64
 }
 
