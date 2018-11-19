@@ -68,6 +68,10 @@ type Options struct {
 	// GCInterval is the interval between mandatory running the garbage
 	// collection process. By default, runs every 10m.
 	MandatoryGCInterval time.Duration
+
+	// GCThreshold sets threshold for the vlog size to be included in the garbage
+	// collection cycle. By default, 1GB.
+	GCThreshold int64
 }
 
 // NewBadgerStore takes a file path and returns a connected Raft backend.
@@ -111,6 +115,7 @@ func New(options Options) (*BadgerStore, error) {
 
 		var gcInterval time.Duration
 		var mandatoryGCInterval time.Duration
+		var threshold int64
 
 		if gcInterval = 1 * time.Minute; options.GCInterval != 0 {
 			gcInterval = options.GCInterval
@@ -118,19 +123,21 @@ func New(options Options) (*BadgerStore, error) {
 		if mandatoryGCInterval = 10 * time.Minute; options.MandatoryGCInterval != 0 {
 			mandatoryGCInterval = options.MandatoryGCInterval
 		}
+		if threshold = int64(1 << 30); options.GCThreshold != 0 {
+			threshold = options.GCThreshold
+		}
 
 		store.vlogTicker = time.NewTicker(gcInterval)
 		store.mandatoryVlogTicker = time.NewTicker(mandatoryGCInterval)
-		go store.runVlogGC(handle)
+		go store.runVlogGC(handle, threshold)
 	}
 
 	return store, nil
 }
 
-func (b *BadgerStore) runVlogGC(db *badger.DB) {
+func (b *BadgerStore) runVlogGC(db *badger.DB, threshold int64) {
 	// Get initial size on start.
 	_, lastVlogSize := db.Size()
-	const GB = 0 //int64(1 << 30)
 
 	runGC := func() {
 		var err error
@@ -145,7 +152,7 @@ func (b *BadgerStore) runVlogGC(db *badger.DB) {
 		select {
 		case <-b.vlogTicker.C:
 			_, currentVlogSize := db.Size()
-			if currentVlogSize < lastVlogSize+GB {
+			if currentVlogSize < lastVlogSize+threshold {
 				continue
 			}
 			runGC()
