@@ -1,4 +1,0 @@
-# Build customization
-before:
-  hooks:
-    - go mod download

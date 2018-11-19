@@ -39,9 +39,9 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 deploy:
-- provider: script
+- provider: releases
+  api_key: $GITHUB_TOKEN
   skip_cleanup: true
-  script: curl -sL http://git.io/goreleaser | bash
   on:
     tags: true
     condition: $TRAVIS_OS_NAME = linux
