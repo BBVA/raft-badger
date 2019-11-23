@@ -1,7 +1,9 @@
-## UNRELEASED
+## v0.2.0 (November 23, 2019)
 
 IMPROVEMENTS
 
+* Use prefixes to distingish between conf and logs.
+* Upgrade Badger version to 1.5.5.
 * Upgrade Raft version to 1.1.1.
 
 ## v0.1.1 (November 19, 2018)

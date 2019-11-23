@@ -25,6 +25,10 @@ import (
 )
 
 var (
+	// Prefix names to distingish between logs and conf
+	prefixLogs = []byte{0x0}
+	prefixConf = []byte{0x1}
+
 	// ErrKeyNotFound is an error indicating a given key does not exist
 	ErrKeyNotFound = errors.New("not found")
 )
@@ -175,26 +179,39 @@ func (b *BadgerStore) Close() error {
 
 // FirstIndex returns the first known index from the Raft log.
 func (b *BadgerStore) FirstIndex() (uint64, error) {
-	return b.firstIndex(false)
-}
-
-// LastIndex returns the last known index from the Raft log.
-func (b *BadgerStore) LastIndex() (uint64, error) {
-	return b.firstIndex(true)
-}
-
-func (b *BadgerStore) firstIndex(reverse bool) (uint64, error) {
 	var value uint64
 	err := b.conn.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,
-			Reverse:        reverse,
+			Reverse:        false,
 		})
 		defer it.Close()
 
-		it.Rewind()
-		if it.Valid() {
-			value = bytesToUint64(it.Item().Key())
+		it.Seek(prefixLogs)
+		if it.ValidForPrefix(prefixLogs) {
+			value = bytesToUint64(it.Item().Key()[1:])
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return value, nil
+}
+
+// LastIndex returns the last known index from the Raft log.
+func (b *BadgerStore) LastIndex() (uint64, error) {
+	var value uint64
+	err := b.conn.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.IteratorOptions{
+			PrefetchValues: false,
+			Reverse:        true,
+		})
+		defer it.Close()
+
+		it.Seek(append(prefixLogs, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff))
+		if it.ValidForPrefix(prefixLogs) {
+			value = bytesToUint64(it.Item().Key()[1:])
 		}
 		return nil
 	})
@@ -207,7 +224,7 @@ func (b *BadgerStore) firstIndex(reverse bool) (uint64, error) {
 // GetLog gets a log entry from Badger at a given index.
 func (b *BadgerStore) GetLog(index uint64, log *raft.Log) error {
 	return b.conn.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(uint64ToBytes(index))
+		item, err := txn.Get(append(prefixLogs, uint64ToBytes(index)...))
 		if err != nil {
 			switch err {
 			case badger.ErrKeyNotFound:
@@ -231,7 +248,7 @@ func (b *BadgerStore) StoreLog(log *raft.Log) error {
 		return err
 	}
 	return b.conn.Update(func(txn *badger.Txn) error {
-		return txn.Set(uint64ToBytes(log.Index), val.Bytes())
+		return txn.Set(append(prefixLogs, uint64ToBytes(log.Index)...), val.Bytes())
 	})
 }
 
@@ -239,7 +256,7 @@ func (b *BadgerStore) StoreLog(log *raft.Log) error {
 func (b *BadgerStore) StoreLogs(logs []*raft.Log) error {
 	return b.conn.Update(func(txn *badger.Txn) error {
 		for _, log := range logs {
-			key := uint64ToBytes(log.Index)
+			key := append(prefixLogs, uint64ToBytes(log.Index)...)
 			val, err := encodeMsgPack(log)
 			if err != nil {
 				return err
@@ -261,11 +278,12 @@ func (b *BadgerStore) DeleteRange(min, max uint64) error {
 		Reverse:        false,
 	})
 
-	for it.Seek(uint64ToBytes(min)); it.Valid(); it.Next() {
-		key := make([]byte, 8)
+	start := append(prefixLogs, uint64ToBytes(min)...)
+	for it.Seek(start); it.Valid(); it.Next() {
+		key := make([]byte, 9)
 		it.Item().KeyCopy(key)
 		// Handle out-of-range log index
-		if bytesToUint64(key) > max {
+		if bytesToUint64(key[1:]) > max {
 			break
 		}
 		// Delete in-range log index
@@ -276,7 +294,7 @@ func (b *BadgerStore) DeleteRange(min, max uint64) error {
 				if err != nil {
 					return err
 				}
-				return b.DeleteRange(bytesToUint64(key), max)
+				return b.DeleteRange(bytesToUint64(key[1:]), max)
 			}
 			return err
 		}
@@ -292,7 +310,7 @@ func (b *BadgerStore) DeleteRange(min, max uint64) error {
 // Set is used to set a key/value set outside of the raft log.
 func (b *BadgerStore) Set(key []byte, val []byte) error {
 	return b.conn.Update(func(txn *badger.Txn) error {
-		return txn.Set(key, val)
+		return txn.Set(append(prefixConf, key...), val)
 	})
 }
 
@@ -300,7 +318,7 @@ func (b *BadgerStore) Set(key []byte, val []byte) error {
 func (b *BadgerStore) Get(key []byte) ([]byte, error) {
 	var value []byte
 	err := b.conn.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
+		item, err := txn.Get(append(prefixConf, key...))
 		if err != nil {
 			switch err {
 			case badger.ErrKeyNotFound:

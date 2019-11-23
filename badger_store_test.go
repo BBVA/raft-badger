@@ -35,7 +35,7 @@ func testBadgerStore(t testing.TB) (*BadgerStore, string) {
 	os.RemoveAll(path)
 
 	// Successfully creates and returns a store
-	store, err := NewBadgerStore(path)
+	store, err := New(Options{Path: path, NoSync: true})
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
