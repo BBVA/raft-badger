@@ -20,7 +20,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/raft/bench"
+	raftbench "github.com/hashicorp/raft/bench"
 )
 
 func BenchmarkBadgerStore_FirstIndex(b *testing.B) {
