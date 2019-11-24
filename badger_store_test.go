@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/v2"
 	"github.com/hashicorp/raft"
 )
 
@@ -73,7 +73,7 @@ func TestBadgerOptionsReadOnly(t *testing.T) {
 	}
 	store.Close()
 
-	defaultOpts := badger.DefaultOptions
+	defaultOpts := badger.DefaultOptions(path)
 	options := Options{
 		Path:          path,
 		BadgerOptions: &defaultOpts,
@@ -119,9 +119,7 @@ func TestNewBadgerStore(t *testing.T) {
 	}
 
 	// Ensure our files were created
-	opts := badger.DefaultOptions
-	opts.Dir = path
-	opts.ValueDir = path
+	opts := badger.DefaultOptions(path)
 	db, err := badger.Open(opts)
 	if err != nil {
 		t.Fatalf("err: %s", err)
