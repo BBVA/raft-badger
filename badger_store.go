@@ -20,7 +20,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/v2"
 	"github.com/hashicorp/raft"
 )
 
@@ -95,11 +95,9 @@ func New(options Options) (*BadgerStore, error) {
 
 	// build badger options
 	if options.BadgerOptions == nil {
-		defaultOpts := badger.DefaultOptions
+		defaultOpts := badger.DefaultOptions(options.Path)
 		options.BadgerOptions = &defaultOpts
 	}
-	options.BadgerOptions.Dir = options.Path
-	options.BadgerOptions.ValueDir = options.Path
 	options.BadgerOptions.SyncWrites = !options.NoSync
 
 	// Try to connect
@@ -233,7 +231,7 @@ func (b *BadgerStore) GetLog(index uint64, log *raft.Log) error {
 				return err
 			}
 		}
-		val, err := item.Value()
+		val, err := item.ValueCopy(nil)
 		if err != nil {
 			return err
 		}
@@ -290,7 +288,7 @@ func (b *BadgerStore) DeleteRange(min, max uint64) error {
 		if err := txn.Delete(key); err != nil {
 			if err == badger.ErrTxnTooBig {
 				it.Close()
-				err = txn.Commit(nil)
+				err = txn.Commit()
 				if err != nil {
 					return err
 				}
@@ -300,7 +298,7 @@ func (b *BadgerStore) DeleteRange(min, max uint64) error {
 		}
 	}
 	it.Close()
-	err := txn.Commit(nil)
+	err := txn.Commit()
 	if err != nil {
 		return err
 	}
