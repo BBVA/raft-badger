@@ -35,7 +35,12 @@ func testBadgerStore(t testing.TB) (*BadgerStore, string) {
 	os.RemoveAll(path)
 
 	// Successfully creates and returns a store
-	store, err := New(Options{Path: path, NoSync: true})
+	badgerOpts := badger.DefaultOptions(path).WithLogger(nil)
+	store, err := New(Options{
+		Path:          path,
+		NoSync:        true,
+		BadgerOptions: &badgerOpts,
+	})
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -73,7 +78,7 @@ func TestBadgerOptionsReadOnly(t *testing.T) {
 	}
 	store.Close()
 
-	defaultOpts := badger.DefaultOptions(path)
+	defaultOpts := badger.DefaultOptions(path).WithLogger(nil)
 	options := Options{
 		Path:          path,
 		BadgerOptions: &defaultOpts,
@@ -119,7 +124,7 @@ func TestNewBadgerStore(t *testing.T) {
 	}
 
 	// Ensure our files were created
-	opts := badger.DefaultOptions(path)
+	opts := badger.DefaultOptions(path).WithLogger(nil)
 	db, err := badger.Open(opts)
 	if err != nil {
 		t.Fatalf("err: %s", err)
