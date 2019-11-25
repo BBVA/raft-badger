@@ -129,8 +129,10 @@ func TestNewBadgerStore(t *testing.T) {
 
 func TestBadgerStore_FirstIndex(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.RemoveAll(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Should get 0 index on empty log
 	idx, err := store.FirstIndex()
@@ -163,8 +165,10 @@ func TestBadgerStore_FirstIndex(t *testing.T) {
 
 func TestBadgerStore_LastIndex(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.RemoveAll(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Should get 0 index on empty log
 	idx, err := store.LastIndex()
@@ -197,8 +201,10 @@ func TestBadgerStore_LastIndex(t *testing.T) {
 
 func TestBadgerStore_GetLog(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.RemoveAll(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	log := new(raft.Log)
 
@@ -228,8 +234,10 @@ func TestBadgerStore_GetLog(t *testing.T) {
 
 func TestBadgerStore_SetLog(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.Remove(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Create the log
 	log := &raft.Log{
@@ -256,8 +264,10 @@ func TestBadgerStore_SetLog(t *testing.T) {
 
 func TestBadgerStore_SetLogs(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.Remove(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Create a set of logs
 	logs := []*raft.Log{
@@ -288,8 +298,10 @@ func TestBadgerStore_SetLogs(t *testing.T) {
 
 func TestBadgerStore_DeleteRange(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.Remove(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Create a set of logs
 	log1 := testRaftLog(1, "log1")
@@ -318,8 +330,10 @@ func TestBadgerStore_DeleteRange(t *testing.T) {
 
 func TestBadgerStore_Set_Get(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.Remove(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Returns error on non-existent key
 	if _, err := store.Get([]byte("bad")); err != ErrKeyNotFound {
@@ -345,8 +359,10 @@ func TestBadgerStore_Set_Get(t *testing.T) {
 
 func TestBadgerStore_SetUint64_GetUint64(t *testing.T) {
 	store, path := testBadgerStore(t)
-	defer store.Close()
-	defer os.Remove(path)
+	defer func() {
+		store.Close()
+		os.RemoveAll(path)
+	}()
 
 	// Returns error on non-existent key
 	if _, err := store.GetUint64([]byte("bad")); err != ErrKeyNotFound {
