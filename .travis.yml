@@ -9,7 +9,8 @@ language: go
 
 # https://github.com/travis-ci/travis-ci/issues/9247
 go:
-    - "1.13"
+  - "1.13"
+  - "1.14"
 env:
   - GO111MODULE=on
 
@@ -34,14 +35,13 @@ script:
   - go test -v -coverprofile=coverage.txt -covermode=atomic ./...
   - go vet -composites=false ./...
 
-
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 deploy:
-- provider: releases
-  api_key: $GITHUB_TOKEN
-  skip_cleanup: true
-  on:
-    tags: true
-    condition: $TRAVIS_OS_NAME = linux
+  - provider: releases
+    api_key: $GITHUB_TOKEN
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: $TRAVIS_OS_NAME = linux
