@@ -1,3 +1,9 @@
+## v1.0.1 (May 27, 2020)
+
+IMPROVEMENTS
+
+* Upgrade Badger version to 2.0.3
+
 ## v1.0.0 (November 25, 2019)
 
 IMPROVEMENTS
