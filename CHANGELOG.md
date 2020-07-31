@@ -1,3 +1,9 @@
+## v1.0.2 (July 31, 2020)
+
+BUG FIXES
+
+* Fix module path
+
 ## v1.0.1 (May 27, 2020)
 
 IMPROVEMENTS
