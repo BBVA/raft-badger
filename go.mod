@@ -1,4 +1,4 @@
-module github.com/bbva/raft-badger
+module github.com/BBVA/raft-badger
 
 go 1.14
 
