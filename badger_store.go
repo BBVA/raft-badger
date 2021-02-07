@@ -20,7 +20,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dgraph-io/badger/v2"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/hashicorp/raft"
 )
 
@@ -252,19 +252,30 @@ func (b *BadgerStore) StoreLog(log *raft.Log) error {
 
 // StoreLogs stores a set of raft logs.
 func (b *BadgerStore) StoreLogs(logs []*raft.Log) error {
-	return b.conn.Update(func(txn *badger.Txn) error {
-		for _, log := range logs {
-			key := append(prefixLogs, uint64ToBytes(log.Index)...)
-			val, err := encodeMsgPack(log)
-			if err != nil {
-				return err
-			}
-			if err := txn.Set(key, val.Bytes()); err != nil {
-				return err
-			}
+	// we manage the transaction manually in order to avoid ErrTxnTooBig errors
+	txn := b.conn.NewTransaction(true)
+	for i, log := range logs {
+		key := append(prefixLogs, uint64ToBytes(log.Index)...)
+		val, err := encodeMsgPack(log)
+		if err != nil {
+			return err
 		}
-		return nil
-	})
+		if err := txn.Set(key, val.Bytes()); err != nil {
+			if err == badger.ErrTxnTooBig {
+				err = txn.Commit()
+				if err != nil {
+					return err
+				}
+				return b.StoreLogs(logs[i:])
+			}
+			return err
+		}
+	}
+	err := txn.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // DeleteRange deletes logs within a given range inclusively.
