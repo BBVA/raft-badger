@@ -1,3 +1,9 @@
+## v1.1.0 (February 7, 2021)
+
+IMPROVEMENTS
+
+* Upgrade Badger version to 3.2011.1
+
 ## v1.0.2 (July 31, 2020)
 
 BUG FIXES
