@@ -18,17 +18,16 @@ package raftbadger
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v4"
 	"github.com/hashicorp/raft"
 )
 
 func testBadgerStore(t testing.TB) (*BadgerStore, string) {
-	path, err := ioutil.TempDir("", "raftbadger")
+	path, err := os.MkdirTemp("", "raftbadger")
 	if err != nil {
 		t.Fatalf("err. %s", err)
 	}
